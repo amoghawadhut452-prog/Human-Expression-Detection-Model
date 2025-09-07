@@ -1,0 +1,10 @@
+# === Colab GPU setup (copy this whole cell into Colab and run) ===
+!pip -q install -U pip
+!pip -q install -r requirements_colab.txt
+
+import onnxruntime as ort
+print("Available providers:", ort.get_available_providers())
+assert "CUDAExecutionProvider" in ort.get_available_providers(), "CUDAExecutionProvider not available. Ensure Colab runtime = GPU."
+
+# If using a video file you uploaded, for example 'sample.mp4':
+# !python -m src.run_realtime --source sample.mp4 --providers CUDAExecutionProvider --show 0

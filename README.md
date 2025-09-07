@@ -1,61 +1,86 @@
-# Human-Expression-Detection-Model
-A machine learning project that detects human faces in images and video streams using OpenCV and deep learning techniques.
-# Human Face Detection  
+# Real-Time Emotion Detection on GPU (FER+ ONNX) — College Project
 
-A machine learning project that detects human faces in images and video streams using **Python, OpenCV, and Deep Learning techniques**. This project highlights the use of computer vision for real-time applications such as security, surveillance, and user authentication.  
+This project gives you a **clean, error-proof baseline** for your college requirement:
 
----
+**Concept:** Parallelize inference of a CNN-based emotion detection model on faces using **CUDA**  
+**Outcome:** Demonstrate **FPS improvement** over a **CPU baseline**
 
-##  Features  
-- Detects human faces in images and real-time video streams.  
-- Draws bounding boxes around detected faces.  
-- Lightweight and works on CPU.  
-- Easy to extend with deep learning models for higher accuracy.  
+You will run the same pipeline twice:
+1) **CPU baseline** on your laptop (no NVIDIA GPU needed).  
+2) **GPU run** on Google Colab (free NVIDIA GPU) with CUDA via **ONNX Runtime (CUDA EP)**.
 
----
+We use:
+- **OpenCV DNN** SSD face detector (ResNet-10) to crop faces.
+- **FER+ pre-trained CNN** (`emotion-ferplus-8.onnx`) for emotion classification (8 classes).
+- **ONNX Runtime** for inference (CPU or CUDA).
 
-##  Tech Stack  
-- **Python 3.x**  
-- **OpenCV**  
-- **NumPy**  
-- (Optional) **Haar Cascade / DNN / CNN-based models**  
+> Tip: The overall FPS includes face detection (CPU). The **classification step** gets the big speed-up on GPU. Use the `--bench-classifier-only` flag to measure classifier speed precisely.
 
----
-
-## Project Structure  
-human-face-detection/
-│── data/ # Sample images for testing
-│── model/ # Pre-trained model files (if any)
-│── face_detection.py # Main Python script
-│── requirements.txt # Dependencies
-│── README.md # Project documentation
-
-##  Installation  
-Clone the repository:  
-```bash
-git clone https://github.com/amoghawadhut452-prog/Human-Expression-Detection-Model.git
-cd Human-Expression-Detection
-pip install -r requirements.txt
-python face_detection.py
-python face_detection.py --image path/to/image.jpg
+## Folder layout
+```
+emotion_gpu_project/
+  models/                # model files will be auto-downloaded here at first run
+  src/
+    common.py            # utilities (downloader, drawing, softmax, FPS meter)
+    models.py            # model URLs + loaders (face detector + FER+ ONNX)
+    run_realtime.py      # main webcam/video app (CPU/GPU switchable)
+    benchmark_video.py   # quick FPS benchmark on a saved video (optional)
+  requirements_cpu.txt
+  requirements_colab.txt
+  colab_gpu_instructions.txt
+  README.md
 ```
 
-Future Improvements
+## Quick Start (CPU baseline on your laptop — Windows PowerShell)
 
-Add mask detection (Face + Mask).
+1. Create & activate a virtual environment:
+```powershell
+py -3.10 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements_cpu.txt
+```
 
-Improve accuracy using DNN (Deep Neural Networks).
+2. Run on your **webcam** (press **q** to quit):
+```powershell
+python -m src.run_realtime --source 0 --show 1
+```
 
-Deploy as a web app with Flask/Streamlit.
+3. Or run on a **video file**:
+```powershell
+python -m src.run_realtime --source "demo.mp4" --show 1
+```
 
+4. Save an **annotated output video** and **CSV FPS log**:
+```powershell
+python -m src.run_realtime --source 0 --show 1 --save out.avi --log_fps fps_cpu.csv
+```
 
+> If `py` isn't found, replace with `python`.
+> If your webcam index 0 doesn't work, try `--source 1`.
 
-Contributing
+## GPU Run on **Google Colab** (CUDA speed-up)
 
-Contributions are welcome! Feel free to fork this repo and submit a pull request.
+Open Colab, **Runtime → Change runtime type → GPU**.  
+Then copy-paste the commands from `colab_gpu_instructions.txt` into a Colab cell, run, and then:
+```bash
+python -m src.run_realtime --source 0 --show 1 --providers CUDAExecutionProvider --log_fps fps_gpu.csv
+```
+You can also test with a short sample video (upload it to Colab first):
+```bash
+python -m src.run_realtime --source sample.mp4 --providers CUDAExecutionProvider --show 1
+```
 
+## What to report
+- **CPU vs GPU FPS** (from `fps_cpu.csv` and `fps_gpu.csv` or console print).
+- Add `--bench-classifier-only 1` to isolate classifier speed.
+- Optional: Increase parallelism with `--batch 4` to batch multiple faces per frame.
 
-License
+## Notes
+- Face detector runs on **CPU** (OpenCV pip wheel does not ship with CUDA). Classification runs on **GPU** in Colab via ONNX Runtime. This satisfies *CUDA parallelization* for your CNN classifier.
+- Emotions: `['neutral','happiness','surprise','sadness','anger','disgust','fear','contempt']`.
 
-This project is licensed under the MIT License.
-
+## References
+- FER+ labels and ordering (Microsoft): https://github.com/microsoft/FERPlus  
+- ONNX FER+ model (emotion-ferplus-8.onnx): https://github.com/onnx/models/tree/main/vision/body_analysis/emotion_ferplus  
+- OpenCV SSD face detector (ResNet-10) model + preprocessing (mean/scale/300x300): see OpenCV `models.yml`.  

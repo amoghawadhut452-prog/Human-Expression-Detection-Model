@@ -1,6 +1,5 @@
 # Real-Time Emotion Detection on GPU (FER+ ONNX) — College Project
 
-This project gives you a **clean, error-proof baseline** for your college requirement:
 
 **Concept:** Parallelize inference of a CNN-based emotion detection model on faces using **CUDA**  
 **Outcome:** Demonstrate **FPS improvement** over a **CPU baseline**
